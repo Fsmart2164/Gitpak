@@ -1,0 +1,13 @@
+
+Usage: gitpak <command> [flag]
+
+A package manager for ensuring software from git stays up to date
+
+Flags:
+    --help, -h          Show help info
+    --version, -v       Print the version info
+
+Commands:
+    in, install <url>   Install a package by the git URL
+    update              Update installed packages
+    lu, list-updates    List packages which need updating
