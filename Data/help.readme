@@ -8,6 +8,9 @@ Flags:
     --version, -v       Print the version info
 
 Commands:
-    in, install <url>   Install a package by the git URL
-    update              Update installed packages
-    lu, list-updates    List packages which need updating
+    install ,in <url>   Install a package by the git URL
+    remove, rm <name>   Remove a package from gitpak (Does not uninstall package!!!)
+    update, up          Update installed packages
+    list-updates, lu    List packages which need updating
+    list                List installed packages
+    force-install, fi   Installs the package regarless of whether it needs updating

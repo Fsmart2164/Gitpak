@@ -8,5 +8,10 @@
     "name": "SwayOSD",
     "url": "https://github.com/ErikReider/SwayOSD",
     "version": "v0.3.2"
+  },
+  {
+    "name": "fetch",
+    "url": "https://github.com/areofyl/fetch",
+    "version": "v2.1.0"
   }
 ]
