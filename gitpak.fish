@@ -48,24 +48,18 @@ function install_package --argument-names name url i total
     end
 
     cd "$project_location/Repos"
-    echo "[$i/$total] Cloning $name..."
-    git clone $url
-    cd $name
 
     set exe "$project_location/Data/Install_Commands/$name.fish"
     # run install script
     echo "[$i/$total] Installing $name..."
     sudo fish $exe
 
-    cd "$project_location/Repos"
-    echo attempting to remove leftover files from $name
-    sudo rm -rf $name
-    echo Removed left over git clone $name
+    echo $name finished
 end
 
 ########################################################### function line ###########################################################
 
-set project_location (cat /etc/gitpak/config)
+set -g project_location (cat /etc/gitpak/config)
 set repos_json "$project_location/Data/repos.json"
 set vgitpak "v0.1.01"
 cd $project_location
@@ -120,88 +114,143 @@ if [ $choice = update ]; or [ $choice = up ]
     end
 else if [ $choice = install ]; or [ $choice = in ]
     ### getting url
+    set clone true
     if not set -q argv[2]
-        set url (read -p "echo enter package url:' '")
-        if [ "$url" = "" ]
+        set urls (read -p "echo enter package url:' '")
+        if [ "$urls" = "" ]
             exit
         end
     else
-        set url $argv[2]
-    end
-
-    ### getting attributes for json storage
-    set url_segments (string split '/' $url)
-    set name $url_segments[(count $url_segments)]
-    if repo_exists $name
-        echo $name already exits
-        echo aborting...
-        return
-    end
-    set ver (get_current_ver $url)
-
-    ### inserting into json
-    jq --arg name "$name" --arg url "$url" --arg version "$ver" \
-        '. + [{"name": $name, "url": $url, "version": $version}]' \
-        $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
-
-    ### checking to see if install instructions are present
-    set skip false
-    if [ -f $exe ]
-        echo Install commands for $name already exist
-        set input (get_input "Would you like to keep these instructions? [Y/n]: " Y n)
-        if [ $input = Y ]
-            set skip true
+        if [ $argv[2] = --no-clone ]
+            set clone false
+            set urls $argv[3..(count $argv)]
+        else
+            set urls $argv[2..(count $argv)]
         end
     end
+    set i 0
+    set total (count $urls)
+    for url in $urls
+        set i (math $i + 1)
+        ### getting attributes for json storage
+        set url_segments (string split '/' $url)
+        set name $url_segments[(count $url_segments)]
+        if repo_exists $name
+            echo $name already exits
+            echo aborting...
+            return
+        end
+        set ver (get_current_ver $url)
+        ### inserting into json
+        jq --arg name "$name" --arg url "$url" --arg version "$ver" \
+            '. + [{"name": $name, "url": $url, "version": $version}]' \
+            $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
 
-    if [ $skip = false ]
-        ### allowing the user to install
-        cd "$project_location/Repos"
-        git clone $url
-        cd $name
-        echo
-        echo now you need to install
-        echo when you have installed the program enter the command done
+        ### checking to see if install instructions are present
+        set skip false
         set exe "$project_location/Data/Install_Commands/$name.fish"
-
-        sudo echo "#!/bin/fish" >$exe
-        while true
-            set command (read -p "echo $USER@$hostname ~> ")
-            if [ $command = done ]
-                break
+        if [ -f $exe ]
+            echo Install commands for $name already exist
+            set input (get_input "Would you like to keep these instructions? [Y/n]: " Y n)
+            if [ $input = Y ]
+                set skip true
             end
-            echo $command >>$exe
-            eval $command
         end
-        cat -n $exe
-        set confirm (get_input "echo 'Is this the correct install commands? [Y/n]:'" Y n)
-        if not [ $confirm = Y ]
-            nano $exe
+
+        if [ $skip = false ]
+            ### allowing the user to install
+            sudo echo "#!/bin/fish" >$exe
+
+            cd "$project_location/Repos"
+
+            if [ $clone = false ]
+                mkdir $name
+                sudo echo "mkdir $name" >>$exe
+                cd $name
+                sudo echo "cd $name" >>$exe
+                sudo echo "### setting up isolated dir ^ do not change ###" >>$exe
+                sudo echo "" >>$exe
+            else
+                git clone $url
+                sudo echo "git clone $url" >>$exe
+
+                cd $name
+                sudo echo "cd $name" >>$exe
+                sudo echo "### git repo cloning ^ do not change ###" >>$exe
+                sudo echo "" >>$exe
+            end
+            echo
+            echo
+            echo
+            echo
+            echo "[$i/$total] now you need to install $name "
+            echo when you have installed the program enter the command: DONE
+
+            set prompt "$USER'@'$hostname '~> ' "
+            while true
+                set command (read -p "echo $prompt")
+                if [ $command = DONE ]
+                    break
+                end
+                echo $command >>$exe
+                eval $command
+            end
+            cat -n $exe
+            set confirm (get_input "echo 'Is this the correct install commands? [Y/n]:'" Y n)
+            if not [ $confirm = Y ]
+                nano $exe
+            end
+
+            sudo echo "" >>$exe
+            sudo echo "### clearing used data \/ do not change ###" >>$exe
+            cd $project_location/Repos/
+            sudo echo "cd $project_location/Repos" >>$exe
+
+            echo removing leftover files from $name ...
+            sudo rm -rf $name
+            sudo echo "sudo rm -rf $name" >>$exe
+
+            echo $name cleaned up
+        else
+            install_package $name $url $i $total
         end
-        cd $project_location/Repos/
-        echo attempting to remove leftover files from $name
-        sudo rm -rf $name
-        echo Removed left over git clone $name
-    else
-        install_package $name $url 1 1
     end
 else if [ $choice = remove ]; or [ $choice = rm ]
     if not set -q argv[2]
-        set name (read -p "echo enter package name:' '")
+        set names (read -p "echo enter package name:' '")
         if [ "$name" = "" ]
             exit
         end
     else
-        set name $argv[2]
+        set names $argv[2..(count $argv)]
     end
-    if not repo_exists $name
-        echo $name is not installed
-        echo aborting...
-        return
+    for name in $names
+        if not repo_exists $name
+            echo $name is not installed
+            echo aborting...
+            return
+        end
+        jq --arg n "$name" 'map(select(.name != $n))' $repos_json >tmp.json; and mv tmp.json $repos_json
+        echo $name removed
     end
-    jq --arg n "$name" 'map(select(.name != $n))' $repos_json >tmp.json; and mv tmp.json $repos_json
-    echo $name has been removed
-
+else if [ $choice = force-install ]; or [ $choice = fi ]
+    if not set -q argv[2]
+        exit
+    else
+        set names $argv[2..(count $argv)]
+    end
+    set i 0
+    set total (count $names)
+    for name in $names
+        set i (math $i + 1)
+        if not repo_exists $name
+            echo $name is not installed
+            echo aborting...
+            continue
+        end
+        set url (get_url $name)
+        install_package $name $url $i $total
+    end
 else if [ $choice = lu ]; or [ $choice = list-updates ]
     list_updates
 else if [ $choice = list ]
@@ -222,3 +271,5 @@ else
 end
 
 # install should be /usr/local/bin
+# for later the commands for completion is 
+# /usr/share/fish/completions/gitpak.fish

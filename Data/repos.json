@@ -12,6 +12,16 @@
   {
     "name": "fetch",
     "url": "https://github.com/areofyl/fetch",
-    "version": "v2.1.0"
+    "version": "v2.2.0"
+  },
+  {
+    "name": "BB_Launcher",
+    "url": "https://github.com/rainmakerv3/BB_Launcher",
+    "version": "Release16.04"
+  },
+  {
+    "name": "dusklight",
+    "url": "https://github.com/TwilitRealm/dusklight",
+    "version": "v1.4.1"
   }
 ]

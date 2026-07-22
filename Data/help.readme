@@ -8,9 +8,25 @@ Flags:
     --version, -v       Print the version info
 
 Commands:
-    install ,in <url>   Install a package by the git URL
-    remove, rm <name>   Remove a package from gitpak (Does not uninstall package!!!)
-    update, up          Update installed packages
-    list-updates, lu    List packages which need updating
-    list                List installed packages
-    force-install, fi   Installs the package regarless of whether it needs updating
+    install ,in <url(s)> :
+        Install a package by the git URL by setting instructions 
+
+        --no-clone :  
+            Will not perform a git clone at the start of installation; useful for specific situations 
+            e.g. using gh to download from releases section
+            #in progress
+
+    force-install, fi <name(s)> :
+        Installs the package regardless of whether it needs updating
+    
+    remove, rm <name(s)> :
+        Remove a package from gitpak (Does not uninstall package!!!)
+
+    update, up :     
+        Update installed packages
+    
+    list-updates, lu :
+        List packages which need updating
+    
+    list :
+        List installed packages
