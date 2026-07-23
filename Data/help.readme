@@ -28,5 +28,13 @@ Commands:
     list-updates, lu :
         List packages which need updating
     
+    ######### not done yet ########
+    add-lock, al :
+        Lock the package at the current version
+
+    remove-lock, rl :
+        Remove the package lock
+    ###############################
+    
     list :
         List installed packages

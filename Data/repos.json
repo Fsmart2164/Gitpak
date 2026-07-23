@@ -23,5 +23,10 @@
     "name": "dusklight",
     "url": "https://github.com/TwilitRealm/dusklight",
     "version": "v1.4.1"
+  },
+  {
+    "name": "Shipwright",
+    "url": "https://github.com/HarbourMasters/Shipwright",
+    "version": "reindeer-games-2025-1"
   }
 ]

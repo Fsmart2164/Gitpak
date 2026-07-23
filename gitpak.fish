@@ -25,7 +25,7 @@ function get_input
 end
 
 function repo_exists --argument-names name
-    set -l found (jq --arg n "$name" 'any(.[]; .name == $n)' $repos_json)
+    set -l found (jq --arg name "$name" 'any(.[]; .name == $name)' $repos_json)
     [ "$found" = true ]
 end
 
@@ -53,15 +53,18 @@ function install_package --argument-names name url i total
     # run install script
     echo "[$i/$total] Installing $name..."
     sudo fish $exe
-
-    echo $name finished
 end
 
 ########################################################### function line ###########################################################
 
+if [ (count (which fish)) = 0 ]
+    echo fish is not installed
+    return
+end
+
 set -g project_location (cat /etc/gitpak/config)
 set repos_json "$project_location/Data/repos.json"
-set vgitpak "v0.1.01"
+set vgitpak "v0.1.10"
 cd $project_location
 
 if set -q argv[1]
@@ -107,6 +110,7 @@ if [ $choice = update ]; or [ $choice = up ]
             set updated_ver $package[3]
 
             install_package $name $url $i $total
+            echo $name finished
             jq --arg url "$url" --arg version "$updated_ver" \
                 '(.[] | select(.url==$url) | .version) = $version' \
                 $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
@@ -141,10 +145,6 @@ else if [ $choice = install ]; or [ $choice = in ]
             return
         end
         set ver (get_current_ver $url)
-        ### inserting into json
-        jq --arg name "$name" --arg url "$url" --arg version "$ver" \
-            '. + [{"name": $name, "url": $url, "version": $version}]' \
-            $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
 
         ### checking to see if install instructions are present
         set skip false
@@ -182,7 +182,6 @@ else if [ $choice = install ]; or [ $choice = in ]
             echo
             echo
             echo
-            echo
             echo "[$i/$total] now you need to install $name "
             echo when you have installed the program enter the command: DONE
 
@@ -214,6 +213,12 @@ else if [ $choice = install ]; or [ $choice = in ]
         else
             install_package $name $url $i $total
         end
+
+        #inserting at the end 
+        jq --arg name "$name" --arg url "$url" --arg version "$ver" \
+            '. + [{"name": $name, "url": $url, "version": $version}]' \
+            $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
+        echo $name successfully installed
     end
 else if [ $choice = remove ]; or [ $choice = rm ]
     if not set -q argv[2]
@@ -250,6 +255,7 @@ else if [ $choice = force-install ]; or [ $choice = fi ]
         end
         set url (get_url $name)
         install_package $name $url $i $total
+        echo $name finished
     end
 else if [ $choice = lu ]; or [ $choice = list-updates ]
     list_updates
@@ -263,12 +269,33 @@ else if [ $choice = list ]
 else if [ $choice = --help ]; or [ $choice = -h ]
     cat "$project_location/Data/help.readme"
 else if [ $choice = --version ]; or [ choice = -v ]
-    cat $project_location/Data/logo
+    set logo "/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|" \
+    "|                                                              | " \
+    "\     ,----.    ,--.   ,--.   ,------.           ,--.          / " \
+    "-    '  .-./    `--' ,-'  '-. |  .--. '  ,--,--. |  |,-.       - " \
+    "/    |  | .---. ,--. '-.  .-' |  '--' | ' ,-.  | |     /       \ " \
+    "|    '  '--'  | |  |   |  |   |  | --'  \ '-'  | |  \  \       | " \
+    "\     `------'  `--'   `--'   `--'       `--`--' `--'`--'      / " \
+    "-                                                              - " \
+    "\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/| "
+    for line in $logo
+        echo $line
+    end
     echo Gitpak version $vgitpak
 else
     echo unknown command
     echo use --help for details
 end
+
+# must add locking
+# make sure install checks if the package already exists
+# make sure it checks if the package name already exists
+# allow the install commands to be edited
+# rebuild allow the package to be installed with edited commands
+# set a proper config file
+# make the help.readme be within the gitpak.fish
+
+
 
 # install should be /usr/local/bin
 # for later the commands for completion is 
