@@ -72,7 +72,7 @@ end
 
 set -g project_location (cat /etc/gitpak/config)
 set repos_json "$project_location/Data/repos.json"
-set vgitpak "v0.1.10"
+set vgitpak "v0.1.20"
 cd $project_location
 
 if set -q argv[1]
@@ -84,6 +84,7 @@ end
 
 if [ $choice = update ]; or [ $choice = up ]
     ### fetching all data and making list of updates
+    echo Looking for updates ...
     set repos (get_names_of_installed)
     set -l updates
     for repo in $repos
