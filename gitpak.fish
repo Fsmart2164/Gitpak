@@ -8,8 +8,16 @@ end
 function get_url --argument-names name
     jq -r --arg name "$name" '.[] | select(.name==$name) | .url' $repos_json
 end
+function get_ver_command --argument-names url
+    jq -r --arg url "$url" '.[] | select(.url==$url) | .ver_command' $repos_json
+end
 function get_current_ver --argument-names url
-    git ls-remote --tags --sort=-v:refname $url | grep -v '\^{}' | head -n1 | sed 's/.*refs\/tags\///'
+    set ver_command (get_ver_command $url)
+    if [ $ver_command = null ]
+        git ls-remote --tags --sort=-v:refname $url | grep -v '\^{}' | head -n1 | sed 's/.*refs\/tags\///'
+    else
+        eval $ver_command
+    end
 end
 
 function get_input
@@ -117,21 +125,49 @@ if [ $choice = update ]; or [ $choice = up ]
         end
     end
 else if [ $choice = install ]; or [ $choice = in ]
-    ### getting url
     set clone true
-    if not set -q argv[2]
+    set custom_ver_command false
+
+    ### getting url
+    if [ (count $argv) -lt 2 ]
         set urls (read -p "echo enter package url:' '")
         if [ "$urls" = "" ]
             exit
         end
-    else
-        if [ $argv[2] = --no-clone ]
-            set clone false
-            set urls $argv[3..(count $argv)]
+    else if [ "$argv[2]" = --no-clone ]
+        set clone false
+        if [ (count $argv) -eq 2 ]
+            echo "Error: No URL provided."
+            exit
+        else if [ "$argv[3]" = --manual-ver ]
+            set custom_ver_command true
+            if [ (count $argv) -eq 3 ]
+                echo "Error: No URL provided."
+                exit
+            end
+            set urls $argv[4..-1]
         else
-            set urls $argv[2..(count $argv)]
+            set urls $argv[3..-1]
         end
+    else if [ "$argv[2]" = --manual-ver ]
+        set custom_ver_command true
+        if [ (count $argv) -eq 2 ]
+            echo "Error: No URL provided."
+            exit
+        else if [ "$argv[3]" = --no-clone ]
+            set clone false
+            if [ (count $argv) -eq 3 ]
+                echo "Error: No URL provided."
+                exit
+            end
+            set urls $argv[4..-1]
+        else
+            set urls $argv[3..-1]
+        end
+    else
+        set urls $argv[2..-1]
     end
+
     set i 0
     set total (count $urls)
     for url in $urls
@@ -144,7 +180,25 @@ else if [ $choice = install ]; or [ $choice = in ]
             echo aborting...
             return
         end
-        set ver (get_current_ver $url)
+
+        if [ $custom_ver_command = true ]
+            while true
+                echo Custom version command cannot contain any \" use \' when applicable
+                set ver_command (read -p "echo enter custom version command:' '")
+                if [ "$ver_command" = "" ]; or string match -q "*\"*" $ver_command
+                    echo Error: Invalid version command
+                else
+                    set ver (eval $ver_command)
+                    set heading Current version is $ver
+                    set input (get_input "$heading ? [Y/n]: " Y n)
+                    if [ $input = Y ]
+                        break
+                    end
+                end
+            end
+        else
+            set ver (get_current_ver $url)
+        end
 
         ### checking to see if install instructions are present
         set skip false
@@ -215,9 +269,20 @@ else if [ $choice = install ]; or [ $choice = in ]
         end
 
         #inserting at the end 
-        jq --arg name "$name" --arg url "$url" --arg version "$ver" \
-            '. + [{"name": $name, "url": $url, "version": $version}]' \
-            $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
+        if [ $custom_ver_command = true ]
+            jq --arg name "$name" \
+                --arg url "$url" \
+                --arg version "$ver" \
+                --arg ver_command "$ver_command" \
+                '. + [{"name": $name, "url": $url, "version": $version, "ver_command": $ver_command}]' \
+                $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
+        else
+            jq --arg name "$name" \
+                --arg url "$url" \
+                --arg version "$ver" \
+                '. + [{"name": $name, "url": $url, "version": $version}]' \
+                $repos_json >"$repos_json.tmp" && mv "$repos_json.tmp" $repos_json
+        end
         echo $name successfully installed
     end
 else if [ $choice = remove ]; or [ $choice = rm ]
@@ -264,20 +329,20 @@ else if [ $choice = list ]
     for name in $package_names
         set url (get_url $name)
         set ver (get_ver $name)
-        echo "$name-$ver :$url"
+        echo "$name:  $ver:  $url"
     end
 else if [ $choice = --help ]; or [ $choice = -h ]
     cat "$project_location/Data/help.readme"
 else if [ $choice = --version ]; or [ choice = -v ]
     set logo "/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|" \
-    "|                                                              | " \
-    "\     ,----.    ,--.   ,--.   ,------.           ,--.          / " \
-    "-    '  .-./    `--' ,-'  '-. |  .--. '  ,--,--. |  |,-.       - " \
-    "/    |  | .---. ,--. '-.  .-' |  '--' | ' ,-.  | |     /       \ " \
-    "|    '  '--'  | |  |   |  |   |  | --'  \ '-'  | |  \  \       | " \
-    "\     `------'  `--'   `--'   `--'       `--`--' `--'`--'      / " \
-    "-                                                              - " \
-    "\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/| "
+        "|                                                              | " \
+        "\     ,----.    ,--.   ,--.   ,------.           ,--.          / " \
+        "-    '  .-./    `--' ,-'  '-. |  .--. '  ,--,--. |  |,-.       - " \
+        "/    |  | .---. ,--. '-.  .-' |  '--' | ' ,-.  | |     /       \ " \
+        "|    '  '--'  | |  |   |  |   |  | --'  \ '-'  | |  \  \       | " \
+        "\     `------'  `--'   `--'   `--'       `--`--' `--'`--'      / " \
+        "-                                                              - " \
+        "\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/| "
     for line in $logo
         echo $line
     end
@@ -294,8 +359,6 @@ end
 # rebuild allow the package to be installed with edited commands
 # set a proper config file
 # make the help.readme be within the gitpak.fish
-
-
 
 # install should be /usr/local/bin
 # for later the commands for completion is 

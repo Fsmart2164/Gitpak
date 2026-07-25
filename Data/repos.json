@@ -10,11 +10,6 @@
     "version": "v0.3.2"
   },
   {
-    "name": "fetch",
-    "url": "https://github.com/areofyl/fetch",
-    "version": "v2.2.0"
-  },
-  {
     "name": "BB_Launcher",
     "url": "https://github.com/rainmakerv3/BB_Launcher",
     "version": "Release16.04"
@@ -28,5 +23,11 @@
     "name": "Shipwright",
     "url": "https://github.com/HarbourMasters/Shipwright",
     "version": "reindeer-games-2025-1"
+  },
+  {
+    "name": "silent-hill-pc-nightly",
+    "url": "https://github.com/SlickAmogus/silent-hill-pc-nightly",
+    "version": "v2026.06.24.2",
+    "ver_command": "gh release list --repo SlickAmogus/silent-hill-pc-nightly -L 1 --json tagName -q '.[0].tagName'"
   }
 ]
