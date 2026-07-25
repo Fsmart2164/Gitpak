@@ -17,7 +17,7 @@ Commands:
             #in progress
         --manual-ver :
             This is used to manually define how to check the version of the package. Useful for situations like
-            nightly builds where they often do not have a git commit and instead gh (for github) is needed
+            nightly builds where they often do not have a git commit and instead gh (for github) is needed - experimental
 
     force-install, fi <name(s)> :
         Installs the package regardless of whether it needs updating

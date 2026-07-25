@@ -27,7 +27,7 @@
   {
     "name": "silent-hill-pc-nightly",
     "url": "https://github.com/SlickAmogus/silent-hill-pc-nightly",
-    "version": "v2026.06.24.2",
+    "version": "beta-2026.07.23.2",
     "ver_command": "gh release list --repo SlickAmogus/silent-hill-pc-nightly -L 1 --json tagName -q '.[0].tagName'"
   }
 ]

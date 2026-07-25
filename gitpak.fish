@@ -68,11 +68,13 @@ end
 if [ (count (which fish)) = 0 ]
     echo fish is not installed
     return
+else if string match -q '*root*' -- (id)
+    echo Running at root is not needed or recommended!!
 end
 
 set -g project_location (cat /etc/gitpak/config)
 set repos_json "$project_location/Data/repos.json"
-set vgitpak "v0.1.20"
+set vgitpak "v0.1.21"
 cd $project_location
 
 if set -q argv[1]
