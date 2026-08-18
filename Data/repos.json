@@ -12,7 +12,7 @@
   {
     "name": "BB_Launcher",
     "url": "https://github.com/rainmakerv3/BB_Launcher",
-    "version": "Release16.04"
+    "version": "Release16.10"
   },
   {
     "name": "dusklight",
@@ -27,7 +27,13 @@
   {
     "name": "silent-hill-pc-nightly",
     "url": "https://github.com/SlickAmogus/silent-hill-pc-nightly",
-    "version": "beta-2026.07.23.2",
+    "version": "beta-2026.08.15.1",
     "ver_command": "gh release list --repo SlickAmogus/silent-hill-pc-nightly -L 1 --json tagName -q '.[0].tagName'"
+  },
+  {
+    "name": "gen1recomp",
+    "url": "https://github.com/bryanthaboi/gen1recomp",
+    "version": "v0.1.92",
+    "ver_command": "gh release list --repo https://github.com/bryanthaboi/gen1recomp -L 1 --json tagName -q '.[0].tagName'"
   }
 ]

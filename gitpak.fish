@@ -327,6 +327,14 @@ else if [ $choice = force-install ]; or [ $choice = fi ]
     end
 else if [ $choice = lu ]; or [ $choice = list-updates ]
     list_updates
+else if [ $choice = edit-install ]; or [ $choice = ei ] 
+    if not set -q argv[2]
+        exit
+    else
+        set name $argv[2]
+    end
+    set exe "$project_location/Data/Install_Commands/$name.fish"
+    nano $exe
 else if [ $choice = list ]
     set package_names (get_names_of_installed)
     for name in $package_names

@@ -39,5 +39,8 @@ Commands:
         Remove the package lock
     ###############################
     
+    edit-install, ei <name> :
+        Loads an editor with the install instructions so you can change them
+
     list :
         List installed packages
